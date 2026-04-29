@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\\.go\"'; then changed_files=$(git diff --name-only 2>/dev/null | grep '\\.go$' | head -5); if [ -n \"$changed_files\" ]; then gofmt -w $changed_files 2>/dev/null && echo \"gofmt: formatted $changed_files\"; fi; fi",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\\.go\"'; then changed_files=$(git diff --name-only 2>/dev/null | grep '\\.go$' | head -5); if [ -n \"$changed_files\" ]; then if command -v goimports >/dev/null 2>&1; then goimports -w $changed_files 2>/dev/null && echo \"goimports: formatted $changed_files\"; else gofmt -w $changed_files 2>/dev/null && echo \"gofmt (goimports not found): formatted $changed_files\"; fi; fi; fi",
             "timeout": 10
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\\.go\"'; then changed_files=$(git diff --name-only 2>/dev/null | grep '\\.go$' | head -5); if [ -n \"$changed_files\" ]; then gofmt -w $changed_files 2>/dev/null && echo \"gofmt: formatted $changed_files\"; fi; fi",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\\.go\"'; then changed_files=$(git diff --name-only 2>/dev/null | grep '\\.go$' | head -5); if [ -n \"$changed_files\" ]; then if command -v goimports >/dev/null 2>&1; then goimports -w $changed_files 2>/dev/null && echo \"goimports: formatted $changed_files\"; else gofmt -w $changed_files 2>/dev/null && echo \"gofmt (goimports not found): formatted $changed_files\"; fi; fi; fi",
             "timeout": 10
           }
         ]

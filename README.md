@@ -6,7 +6,7 @@ Personal collection of [Claude Code](https://docs.claude.com/en/docs/claude-code
 
 | Plugin | Description |
 |--------|-------------|
-| [go-standards](plugins/go-standards/) | Go microservices development standards (Clean Architecture, DDD, testing, linting, error handling). Skills auto-activate when working with Go. |
+| [go-standards](plugins/go-standards/) | Go microservices development standards (Clean Architecture, DDD, testing, linting, error handling, version-aware modernization, library catalog). 7 auto-activated skills, 5 slash commands (`/ca-init-go`, `/ca-validate-go`, `/go-review`, `/go-gen-test`, `/go-audit`), `goimports` + generated-files hooks. |
 
 ## Install
 

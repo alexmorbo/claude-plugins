@@ -26,6 +26,8 @@ Claude loads these automatically when the conversation matches their description
 | `go-error-handling` | Creating error types, handling errors, wrapping errors, error boundaries |
 | `go-testing` | Writing tests, reviewing coverage, creating mocks |
 | `go-linting` | After Go code changes, before completing implementation |
+| `go-modernize` | Generating new Go code or refactoring — counters Claude's bias toward older idioms (`interface{}`, manual loops, etc.) by mapping to current stdlib (`any`, `slices.Contains`, `t.Context()`, `slog`, …) based on `go.mod` version |
+| `go-libraries-first` | Before writing any helper/util/wrapper — checks a curated catalog ("for X use library Y") to prevent reinventing retry, backoff, validation, MQTT, Modbus, etc. |
 
 Each skill points at deeper reference docs in `references/` via `${CLAUDE_PLUGIN_ROOT}` so the agent can read them on demand.
 
@@ -35,15 +37,22 @@ Each skill points at deeper reference docs in `references/` via `${CLAUDE_PLUGIN
 |---------|---------|
 | `/ca-init-go` | Scaffold a new Go service with Clean Architecture structure |
 | `/ca-validate-go` | Validate an existing Go service for CA compliance |
+| `/go-review` | Diff-aware review: `go vet` + `staticcheck` + `golangci-lint` + `gosec` + `govulncheck` + tests + build, with CRITICAL/HIGH/MEDIUM severity report |
+| `/go-gen-test` | Generate a table-driven test for a function/method, layered to its CA layer (domain/application/infrastructure/interface), with edge cases and modern stdlib idioms |
+| `/go-audit` | Pre-release safety audit: vulnerabilities, security findings, license compliance, outdated deps, module hygiene |
 
 ### Hooks
 
 | Hook | Trigger | Action |
 |------|---------|--------|
-| `PostToolUse` (Write/Edit) | After a `.go` file is written | Auto-format with `gofmt -w` |
+| `PostToolUse` (Write/Edit) | After a `.go` file is written | Auto-format with `goimports -w` (falls back to `gofmt -w` if `goimports` not installed) |
 | `PreToolUse` (Write/Edit) | Before any file write | Block edits to generated files: `*.pb.go`, `*_gen.go`, `*_mock.go`, `mocks/`, `generated/` |
 
-The post-hook reads `git diff` to find changed `.go` files in `$CLAUDE_PROJECT_DIR`, so it works on any project where `gofmt` is on `PATH`.
+The post-hook reads `git diff` to find changed `.go` files in `$CLAUDE_PROJECT_DIR`. Install `goimports` for the better behavior:
+
+```bash
+go install golang.org/x/tools/cmd/goimports@latest
+```
 
 ### Reference documentation
 
@@ -66,6 +75,9 @@ Full docs in `references/`:
 | `observability.md` | VictoriaMetrics/Logs |
 | `logging-format.md` | Structured slog |
 | `agent-workflow/` | Multi-agent (Opus → Haiku) story-driven workflow |
+| `anti-patterns.md` | Go anti-patterns and Claude's common mistakes (outdated idioms, generic package names, naked `return err`, pointer overuse, etc.) |
+| `style-references.md` | Pointers to Effective Go, Google, Uber, Code Review Comments + table of what each adds beyond our docs |
+| `mcp-servers.md` | Recommended MCP servers for Go work (`gopls mcp`, `hloiseau/mcp-gopls`) with `.mcp.json` snippets |
 
 These don't load automatically — skills reference them by path so the agent reads them when needed.
 
