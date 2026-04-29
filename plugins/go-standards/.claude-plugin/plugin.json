@@ -1,0 +1,13 @@
+{
+  "name": "go-standards",
+  "version": "0.1.0",
+  "description": "Go microservices development standards: Clean Architecture, DDD, testing, linting, error handling. Auto-activated skills, slash commands, and gofmt/generated-files hooks.",
+  "author": {
+    "name": "alexmorbo",
+    "email": "alex@morbo.ru"
+  },
+  "homepage": "https://github.com/alexmorbo/claude-plugins",
+  "repository": "https://github.com/alexmorbo/claude-plugins",
+  "license": "MIT",
+  "keywords": ["go", "golang", "clean-architecture", "ddd", "microservices", "testing", "linting"]
+}

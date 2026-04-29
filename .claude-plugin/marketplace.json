@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "claude-plugins",
+  "description": "Personal collection of Claude Code plugins",
+  "owner": {
+    "name": "alexmorbo",
+    "email": "alex@morbo.ru"
+  },
+  "plugins": [
+    {
+      "name": "go-standards",
+      "source": "./plugins/go-standards",
+      "description": "Go microservices development standards: Clean Architecture, DDD, testing, linting, error handling. Includes auto-activated skills, slash commands, and gofmt hooks.",
+      "category": "development",
+      "version": "0.1.0",
+      "author": {
+        "name": "alexmorbo",
+        "email": "alex@morbo.ru"
+      },
+      "homepage": "https://github.com/alexmorbo/claude-plugins"
+    }
+  ]
+}

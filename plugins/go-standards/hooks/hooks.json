@@ -1,0 +1,48 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\\.go\"'; then changed_files=$(git diff --name-only 2>/dev/null | grep '\\.go$' | head -5); if [ -n \"$changed_files\" ]; then gofmt -w $changed_files 2>/dev/null && echo \"gofmt: formatted $changed_files\"; fi; fi",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\\.go\"'; then changed_files=$(git diff --name-only 2>/dev/null | grep '\\.go$' | head -5); if [ -n \"$changed_files\" ]; then gofmt -w $changed_files 2>/dev/null && echo \"gofmt: formatted $changed_files\"; fi; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE '(\\.pb\\.go|\\_gen\\.go|\\_mock\\.go|/mocks/|/generated/)'; then echo 'BLOCKED: Cannot modify generated files (.pb.go, _gen.go, _mock.go, mocks/, generated/)' && exit 2; fi",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE '(\\.pb\\.go|\\_gen\\.go|\\_mock\\.go|/mocks/|/generated/)'; then echo 'BLOCKED: Cannot modify generated files (.pb.go, _gen.go, _mock.go, mocks/, generated/)' && exit 2; fi",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
