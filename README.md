@@ -14,7 +14,7 @@ In any Claude Code session:
 
 ```
 /plugin marketplace add git@github.com:alexmorbo/claude-plugins.git
-/plugin install go-standards@claude-plugins
+/plugin install go-standards@alexmorbo-plugins
 ```
 
 HTTPS variant if SSH isn't set up:
@@ -28,15 +28,15 @@ After install, run `/plugin` to see installed plugins, enable/disable them, or b
 ## Update
 
 ```
-/plugin marketplace update claude-plugins
-/plugin install go-standards@claude-plugins
+/plugin marketplace update alexmorbo-plugins
+/plugin install go-standards@alexmorbo-plugins
 ```
 
 ## Uninstall
 
 ```
-/plugin uninstall go-standards@claude-plugins
-/plugin marketplace remove claude-plugins
+/plugin uninstall go-standards@alexmorbo-plugins
+/plugin marketplace remove alexmorbo-plugins
 ```
 
 ## Repo layout
@@ -63,4 +63,4 @@ claude-plugins/
 3. Append an entry to `.claude-plugin/marketplace.json` → `plugins[]` with `"source": "./plugins/<name>"`.
 4. Bump versions, commit, push.
 
-Users installing for the first time pick up the new plugin immediately; existing users run `/plugin marketplace update claude-plugins` and then `/plugin install <name>@claude-plugins`.
+Users installing for the first time pick up the new plugin immediately; existing users run `/plugin marketplace update alexmorbo-plugins` and then `/plugin install <name>@alexmorbo-plugins`.

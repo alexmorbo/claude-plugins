@@ -8,7 +8,7 @@ Originally extracted from a homelab monorepo to make these standards reusable ac
 
 ```
 /plugin marketplace add git@github.com:alexmorbo/claude-plugins.git
-/plugin install go-standards@claude-plugins
+/plugin install go-standards@alexmorbo-plugins
 ```
 
 See the [marketplace README](../../README.md) for HTTPS install / update / uninstall.
@@ -90,11 +90,11 @@ After installing the plugin, paste this into your project's `CLAUDE.md` so futur
 
 This project uses the [`go-standards` plugin](https://github.com/alexmorbo/claude-plugins) for Go conventions.
 
-**Auto-activated skills:** `go-clean-architecture`, `go-code-planning`, `go-error-handling`, `go-testing`, `go-linting`.
+**Auto-activated skills:** `go-clean-architecture`, `go-code-planning`, `go-error-handling`, `go-testing`, `go-linting`, `go-modernize`, `go-libraries-first`.
 
-**Slash commands:** `/ca-init-go`, `/ca-validate-go`.
+**Slash commands:** `/ca-init-go`, `/ca-validate-go`, `/go-review`, `/go-gen-test`, `/go-audit`.
 
-**Hooks:** auto-`gofmt` on `.go` writes; block edits to generated files (`.pb.go`, `_gen.go`, `_mock.go`, `mocks/`, `generated/`).
+**Hooks:** auto-`goimports` (or `gofmt` fallback) on `.go` writes; block edits to generated files (`.pb.go`, `_gen.go`, `_mock.go`, `mocks/`, `generated/`).
 
 **Key principles:**
 - Clean Architecture: Domain → Application → Infrastructure → Interface
