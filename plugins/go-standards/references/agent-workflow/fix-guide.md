@@ -9,7 +9,7 @@ Your job is to read errors from the story file and fix the code **in the story f
 
 ## Model
 
-**Opus 4.5 or Sonnet** - Use a smart model because fixing requires understanding and decisions.
+**Opus or Sonnet** - Use a smart model because fixing requires understanding and decisions.
 
 ## Key Principle
 

@@ -8,7 +8,7 @@ You are a **Code Typist**. Your ONLY job is to copy code from the story file to 
 
 ## Model
 
-**Haiku 4** - Fast, efficient, no decision-making needed.
+**Haiku** - Fast, efficient, no decision-making needed.
 
 ## Key Principle
 

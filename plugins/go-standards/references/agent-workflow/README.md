@@ -2,7 +2,7 @@
 
 ## Overview
 
-AI-assisted development workflow separating **intelligent planning** (Opus 4.5) from **mechanical execution** (Haiku).
+AI-assisted development workflow separating **intelligent planning** (Opus) from **mechanical execution** (Haiku).
 
 **CRITICAL**: All operations MUST happen via Task tool agents. The main context (Opus) is ONLY for:
 - Reading user requests
@@ -14,7 +14,7 @@ AI-assisted development workflow separating **intelligent planning** (Opus 4.5) 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    MAIN CONTEXT (Opus 4.5)                      │
+│                    MAIN CONTEXT (Opus)                      │
 │                                                                 │
 │  - Receives user requests                                       │
 │  - Launches agents via Task tool                                │
@@ -375,7 +375,7 @@ service/
 
 | Role | Context | Model | Does |
 |------|---------|-------|------|
-| Orchestrator | Main | Opus 4.5 | Launches agents, reviews results |
+| Orchestrator | Main | Opus | Launches agents, reviews results |
 | Planner | Task | Opus | Writes code in story |
 | Implementer | Task | Haiku | Copies code to files |
 | Fixer | Task | Sonnet/Opus | Fixes errors in story |

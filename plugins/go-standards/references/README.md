@@ -41,8 +41,8 @@ For AI-assisted development workflow, see [agent-workflow/](agent-workflow/):
 |----------|---------|
 | [Overview](agent-workflow/README.md) | Multi-agent workflow explanation |
 | [Story Template](agent-workflow/story-template.md) | Task documentation format (Markdown + YAML) |
-| [Planning Guide](agent-workflow/planning-guide.md) | For planning agents (Opus 4.5 / Sonnet 4.5) |
-| [Implementation Guide](agent-workflow/implementation-guide.md) | For implementation agents (Haiku 4) |
+| [Planning Guide](agent-workflow/planning-guide.md) | For planning agents (Opus / Sonnet) |
+| [Implementation Guide](agent-workflow/implementation-guide.md) | For implementation agents (Haiku) |
 
 ## Claude Code Skills & Hooks
 

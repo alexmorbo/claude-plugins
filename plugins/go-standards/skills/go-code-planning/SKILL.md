@@ -5,14 +5,14 @@ description: "Code-first planning for Go microservices. Use when creating story 
 
 # Go Code-First Planning Skill
 
-This skill ensures Opus 4.5 writes complete, production-ready code in story files.
+This skill ensures Opus writes complete, production-ready code in story files.
 Haiku will only copy this code to files - no thinking, no modifications.
 
 ## Core Principle
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  OPUS 4.5 (You)                                            │
+│  OPUS (You)                                            │
 │                                                            │
 │  ✓ Explore codebase                                        │
 │  ✓ Make ALL decisions                                      │

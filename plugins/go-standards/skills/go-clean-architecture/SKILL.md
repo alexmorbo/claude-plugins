@@ -148,7 +148,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 
 ## Code-First Planning Integration
 
-When planning (Opus 4.5), write COMPLETE code in story files following this structure:
+When planning (Opus), write COMPLETE code in story files following this structure:
 
 ```markdown
 ### 1. Domain Layer

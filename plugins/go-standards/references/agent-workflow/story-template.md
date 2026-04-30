@@ -6,7 +6,7 @@ Stories use Markdown with YAML frontmatter for metadata.
 
 ## Key Principle: Code-First Planning
 
-**Opus 4.5 writes COMPLETE, PRODUCTION-READY code in the story file.**
+**Opus writes COMPLETE, PRODUCTION-READY code in the story file.**
 **Haiku only copies this code to actual files.**
 
 This ensures:
@@ -22,8 +22,8 @@ title: "Feature: Short descriptive title"
 status: draft
 priority: medium
 complexity: 5
-planning_model: opus-4-5
-implementation_model: haiku-4
+planning_model: opus
+implementation_model: haiku
 created: 2025-01-16
 updated: 2025-01-16
 risk_areas: []
@@ -342,8 +342,8 @@ coverage: [X%]
 | `status` | enum | `draft`, `planning`, `ready`, `in_progress`, `review`, `done` |
 | `priority` | enum | `high`, `medium`, `low` |
 | `complexity` | number | 1-10 scale (affects review requirements) |
-| `planning_model` | string | Model for planning: `opus-4-5` (recommended) |
-| `implementation_model` | string | Model for implementation: `haiku-4` |
+| `planning_model` | string | Model for planning: `opus` (recommended) |
+| `implementation_model` | string | Model for implementation: `haiku` |
 | `created` | date | Story creation date (YYYY-MM-DD) |
 | `updated` | date | Last update date (YYYY-MM-DD) |
 | `depends_on` | string | (optional) Story ID that must be completed first |
@@ -496,7 +496,7 @@ Examples:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    OPUS 4.5 (Planning)                      │
+│                    OPUS (Planning)                      │
 │  - Explores codebase                                        │
 │  - Writes COMPLETE CODE in story file                       │
 │  - All decisions made here                                  │
