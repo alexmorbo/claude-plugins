@@ -12,7 +12,7 @@
       "source": "./plugins/go-standards",
       "description": "Go microservices development standards: Clean Architecture, DDD, testing, linting, error handling. Includes auto-activated skills, slash commands, and gofmt hooks.",
       "category": "development",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "author": {
         "name": "alexmorbo",
         "email": "alex@morbo.ru"

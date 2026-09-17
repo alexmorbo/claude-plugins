@@ -2,51 +2,62 @@
 
 ## Overview
 
-AI-assisted development workflow separating **intelligent planning** (Opus) from **mechanical execution** (Haiku).
+AI-assisted development workflow separating **deciding** (Opus) from
+**building** (Sonnet), with verification wired into both.
 
-**CRITICAL**: All operations MUST happen via Task tool agents. The main context (Opus) is ONLY for:
-- Reading user requests
-- Launching appropriate agents via Task tool
-- Reviewing agent results
-- Communicating with the user
+The story file carries intent and contracts. The repository carries the code.
+Neither duplicates the other.
 
 ## Core Principle
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    MAIN CONTEXT (Opus)                      │
+│                    THE STORY IS A CONTRACT                      │
 │                                                                 │
-│  - Receives user requests                                       │
-│  - Launches agents via Task tool                                │
-│  - Reviews results                                              │
-│  - NEVER writes code directly                                   │
-│  - NEVER runs tests directly                                    │
-│  - NEVER fixes errors directly                                  │
+│  Planning decides:  scope, signatures, schemas, invariants,     │
+│                     acceptance criteria, verification commands  │
 │                                                                 │
-│  "I orchestrate, agents execute"                                │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    AGENTS (via Task tool)                       │
+│  Implementation:    writes bodies and tests in the repo,        │
+│                     compiles, lints, tests, fixes what breaks   │
 │                                                                 │
-│  Planning Agent (Opus) ──► Writes code in story                 │
-│  Implementation Agent (Haiku) ──► Copies code to files          │
-│  Fix Agent (Sonnet/Opus) ──► Fixes errors in story              │
-│  Code Review Agent (Haiku) ──► Verifies implementation          │
-│                                                                 │
-│  All communication between agents: via story file               │
+│  Code that never compiled is not a plan - it is a guess.        │
+│  A story describing code that does not exist is worse than      │
+│  no story at all.                                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Agent Types
+## Why Not Put the Code in the Story
 
-| Agent | Model | Purpose | Input | Output |
-|-------|-------|---------|-------|--------|
-| **Planning** | Opus | Write complete code in story | Story (draft) | Story (ready) |
-| **Implementation** | Haiku | Copy code from story to files | Story (ready) | Files + Story (review/in_progress) |
-| **Fix** | Sonnet/Opus | Fix errors in story code | Story (in_progress + errors) | Story (ready) |
-| **Code Review** | Haiku | Verify implementation | Story (review) | Story (done) or issues |
+The older version of this workflow had planning write complete, production-ready
+code into the story, with a cheap model copying it into files. That is no longer
+the recommended shape, for four independent reasons:
+
+1. **No feedback.** Code written into Markdown never meets `go build`. Planning
+   improves outcomes when it encodes feedback; a plan of untested code encodes
+   none - and Go's compiler is the cheapest, most precise reviewer available.
+2. **Drift.** Implementation adjusts the code to make things pass. The story is
+   not adjusted. What is left is a confident document describing a codebase that
+   does not exist.
+3. **Reviewability.** The plan is the high-leverage review surface precisely
+   because it is shorter than the code. A plan containing the whole
+   implementation is longer than the code *and* has no tooling behind it.
+4. **The cheap tier is not a transcriber.** A smaller model today is a full
+   agent with tools and a verification loop. Using it to copy Markdown wastes
+   what it is actually good at and adds a parsing step that can silently corrupt
+   the result.
+
+## Agent Roles
+
+| Agent | Tier | Purpose | Input | Output |
+|-------|------|---------|-------|--------|
+| **Planning** | Opus | Write scope, contracts, acceptance criteria | Story (draft) | Story (ready) |
+| **Implementation** | Sonnet | Write code in repo, verify, fix | Story (ready) | Code + Story (review) |
+| **Mechanical edits** | Haiku | Single-file edits, codemods, renames | Explicit instruction | Code |
+| **Review** | fresh context | Verify diff against acceptance criteria | Story (review) + diff | Story (done) or issues |
+| **Reconcile** | Opus | Resolve story/code divergence | Diverged story + repo | Story (ready/done) |
+
+Review is never performed by the agent that wrote the code - an author
+reviewing itself is reliably too generous.
 
 ## Complete Workflow
 
@@ -59,108 +70,111 @@ AI-assisted development workflow separating **intelligent planning** (Opus) from
          │
          ▼
 ┌──────────────────────────────────────┐
-│   PLANNING AGENT (Opus via Task)     │  ← Task tool invocation
-│   Writes complete code in story      │     model: "opus"
+│   PLANNING AGENT (Opus)              │
+│   Scope, contracts, acceptance,      │
+│   steps, verification commands       │
 │   Status: draft → ready              │
 └────────┬─────────────────────────────┘
          │
          ▼
 ┌──────────────────┐
 │   USER REVIEW    │
-│   Reviews code   │
-│   in story file  │
+│   Reviews the    │
+│   contracts      │
 └────────┬─────────┘
          │
          ▼
 ┌──────────────────────────────────────┐
-│   IMPLEMENTATION AGENT (Haiku)       │  ← Task tool invocation
-│   Copies code from story to files    │     model: "haiku"
-│   Runs verification                  │
-│   Status: ready → in_progress/review │
+│   IMPLEMENTATION AGENT (Sonnet)      │
+│   Writes code in the repository      │
+│   ┌────────────────────────────────┐ │
+│   │ edit → build → lint → test     │ │
+│   │   ▲                      │     │ │
+│   │   └──── fix ◄────────────┘     │ │
+│   └────────────────────────────────┘ │
+│   Status: ready → in_progress → review│
 └────────┬─────────────────────────────┘
          │
-         ├── If PASS ─────────────────────┐
-         │                                │
-         ▼                                │
-┌────────────────────────┐                │
-│   If FAIL              │                │
-│   Errors in story      │                │
-└────────┬───────────────┘                │
-         │                                │
-         ▼                                │
-┌──────────────────────────────────────┐  │
-│   FIX AGENT (Sonnet/Opus via Task)   │  │  ← Task tool invocation
-│   Reads errors from story            │  │     model: "sonnet" or "opus"
-│   Fixes code IN STORY FILE           │  │
-│   Status: in_progress → ready        │  │
-└────────┬─────────────────────────────┘  │
-         │                                │
-         └── Loop back to Implementation ─┘
-                                          │
-                                          ▼
+         ├── Contract wrong? ──► fix story FIRST, record it, continue
+         │
+         ▼
 ┌──────────────────────────────────────┐
-│   CODE REVIEW AGENT (Haiku via Task) │  ← Task tool invocation
-│   Verifies files match story         │     model: "haiku"
+│   REVIEW AGENT (fresh context)       │
+│   Diff vs acceptance criteria        │
 │   Status: review → done              │
 └────────┬─────────────────────────────┘
          │
          ├── APPROVED → done
          │
-         └── NEEDS_CHANGES → Fix Agent → Implementation Agent
+         └── NEEDS_CHANGES → back to Implementation
 ```
 
 ## Critical Rules
 
-### 1. Main Context NEVER Does Work
+### 1. The Verification Loop Is Not Optional
 
-```
-❌ WRONG (in main context):
-- Reading code files to fix errors
-- Writing/editing actual code files
-- Running go test or golangci-lint
-- Making code changes based on errors
+Every change is compiled, linted and tested before it counts as done. Wire it
+into hooks so it happens without being asked:
 
-✓ RIGHT (in main context):
-- Launch Planning Agent to write code
-- Launch Implementation Agent to copy code
-- Launch Fix Agent when errors occur
-- Launch Code Review Agent to verify
-```
-
-### 2. All Communication Via Story File
-
-Agents don't communicate directly. They read/write the story file:
-
-```
-Planning Agent ──writes──► Story File ──read by──► Implementation Agent
-                               │
-Implementation Agent ──writes errors──► Story File ──read by──► Fix Agent
-                               │
-Fix Agent ──writes fixes──► Story File ──read by──► Implementation Agent
-```
-
-### 3. Fix Agent vs Main Context
-
-**When Implementation Agent reports errors:**
-
-```
-❌ WRONG:
-Main context reads errors and starts editing code directly
-
-✓ RIGHT:
-Main context launches Fix Agent via Task tool
-Fix Agent reads errors from story
-Fix Agent fixes code IN THE STORY FILE
-Main context launches Implementation Agent again
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/go-check.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/go-test.sh" }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### 4. Session Isolation
+`PostToolUse` fires after every file edit (`gofmt`, `golangci-lint`); `Stop`
+fires before the turn ends (`go build`, `go test`). A hook exiting with code
+**2** returns its stderr to the model as feedback. Nothing here depends on the
+model remembering to check its own work.
 
-Each agent runs in its own context (Task tool). This ensures:
-- Clean context for each operation
-- No pollution of main context
-- Clear separation of concerns
-- Predictable behavior
+### 2. Story and Code Never Diverge Silently
+
+When implementation finds a contract is wrong:
+
+```
+❌ WRONG: change the code, leave the story describing the old design
+✓ RIGHT: fix the story, record it under Contract Corrections, then the code
+```
+
+Small, local corrections are made by the implementer. Divergence spanning
+several stories or a whole phase goes to the Reconcile Agent.
+
+### 3. Don't Get Green by Weakening the Check
+
+```
+❌ Skipping a test, deleting an assertion, disabling a linter
+✓ Fixing the code, or explaining why the expectation itself was wrong
+```
+
+A green suite bought this way is worse than a red one: it removes the signal.
+
+### 4. Scope Is Bounded by the Story
+
+The story's OUT list is binding. Work that looks adjacent and cheap belongs in
+its own story - otherwise the diff outgrows the review and the acceptance
+criteria stop covering it.
+
+### 5. Prefer Semantic Navigation
+
+Where `gopls` is available as an MCP server (`gopls mcp`, v0.20+), use its
+definition/references/implementations tools instead of text search. It is
+compiler-accurate and far cheaper in context than reading whole files.
 
 ## Task Tool Invocations
 
@@ -173,21 +187,23 @@ Task tool call:
 - prompt: |
     You are a PLANNING AGENT for story NNN-feature-name.
 
-    YOUR JOB: Write COMPLETE, PRODUCTION-READY code in the story file.
+    YOUR JOB: write scope, contracts and acceptance criteria in the story.
 
     PROCESS:
     1. Read story: SERVICE_PATH/documentation/stories/NNN-feature-name.md
-    2. Explore codebase to understand patterns
-    3. Write complete code for each file in story
-    4. Write complete tests for each file
-    5. Set status to "ready"
+    2. Explore the codebase to understand existing patterns
+    3. Write Scope (explicit IN and OUT)
+    4. Write Contracts: signatures, schemas, error shapes, wire formats,
+       invariants in prose
+    5. Write Steps, each ending in a verification command
+    6. Write checkable acceptance criteria
+    7. Mark anything unknown as [NEEDS CLARIFICATION] - never guess
+    8. Set status to "ready"
 
     RULES:
-    - Write COMPLETE code, no TODOs
-    - Include ALL imports
-    - Write ALL tests
-    - Follow Clean Architecture
-    - Do NOT create actual files
+    - NO function bodies, NO full test suites, NO migrations
+    - Name test cases that must be covered; do not write the suite
+    - Do NOT create or modify code files
 
     Work directory: SERVICE_PATH/
 ```
@@ -197,105 +213,76 @@ Task tool call:
 ```
 Task tool call:
 - subagent_type: "systems-programming:golang-pro"
-- model: "haiku"
+- model: "sonnet"
 - prompt: |
     You are an IMPLEMENTATION AGENT for story NNN-feature-name.
 
-    YOUR ONLY JOB: Copy code from story to files.
-
-    RULES:
-    - DO NOT modify code
-    - DO NOT add anything
-    - DO NOT fix errors
-    - ONLY copy code blocks to file paths
+    YOUR JOB: implement the contracts in the repository, verified.
 
     PROCESS:
     1. Read story: SERVICE_PATH/documentation/stories/NNN-feature-name.md
-    2. For each "#### File: `path`" - copy code block to that path
-    3. Run: golangci-lint run ./... && go test ./...
-    4. If PASS: set status to "review"
-    5. If FAIL: write errors to "Issues Found", keep status "in_progress"
-
-    Work directory: SERVICE_PATH/
-```
-
-### Fix Agent
-
-```
-Task tool call:
-- subagent_type: "systems-programming:golang-pro"
-- model: "sonnet"
-- prompt: |
-    You are a FIX AGENT for story NNN-feature-name.
-
-    Implementation failed with errors. Your job:
-    1. Read story: SERVICE_PATH/documentation/stories/NNN-feature-name.md
-    2. Find "Issues Found" section
-    3. Fix ALL errors in the code blocks IN THE STORY FILE
-    4. Document fixes in "Fixes Applied" section
-    5. Set status to "ready"
+    2. Implement step by step, in the story's order
+    3. After EVERY step: go build ./... && golangci-lint run ./... &&
+       go test -race -count=1 ./...
+    4. Fix what the tooling reports
+    5. If a CONTRACT is wrong: fix the story first, record it under
+       "Contract Corrections", then continue
+    6. Update Implementation Notes and Files Changed
+    7. Green → status "review". Blocked → status "in_progress" with exact
+       errors and what you need
 
     RULES:
-    - ONLY edit story file, NOT actual code files
-    - Fix ALL errors
-    - Do NOT add new features
-    - Do NOT run tests
+    - Do NOT expand into the story's OUT list
+    - Do NOT skip tests, disable linters or weaken assertions to get green
+    - Do NOT mark "review" on a red build
 
     Work directory: SERVICE_PATH/
 ```
 
-### Code Review Agent
+### Review Agent
 
 ```
 Task tool call:
 - subagent_type: "code-documentation:code-reviewer"
-- model: "haiku"
 - prompt: |
-    Review implementation for story NNN-feature-name.
+    Review the diff for story NNN-feature-name. You did NOT write this code.
 
-    VERIFY:
-    1. All files from story exist
-    2. Contents match story exactly
-    3. Tests pass
-    4. Coverage meets thresholds
+    CHECK:
+    1. Every acceptance criterion genuinely satisfied, not approximated
+    2. Code matches the contracts; divergence recorded as Contract Correction
+    3. Tests meaningful - no skipped cases, no weakened assertions
+    4. Error handling, logging and style follow the project references
+    5. Coverage thresholds met (domain 95%, application 80%)
+    6. Nothing from the story's OUT list implemented
 
     OUTPUT:
-    - APPROVED: Set status to "done"
-    - NEEDS_CHANGES: List issues
+    - APPROVED → set status to "done"
+    - NEEDS_CHANGES → list specific issues
 ```
 
-## Error Handling Flow
-
-When Implementation Agent fails:
+### Reconcile Agent
 
 ```
-┌─────────────────────────────────────────┐
-│ Implementation Agent reports:           │
-│ "Verification FAILED"                   │
-│ "Issues documented in story"            │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│ Main Context sees failure               │
-│                                         │
-│ ❌ WRONG: Start fixing code directly    │
-│ ✓ RIGHT: Launch Fix Agent               │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│ Fix Agent (via Task tool):              │
-│ - Reads errors from story               │
-│ - Fixes code IN STORY FILE              │
-│ - Sets status to "ready"                │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│ Main Context launches Implementation    │
-│ Agent again (new Task tool call)        │
-└─────────────────────────────────────────┘
+Task tool call:
+- subagent_type: "systems-programming:golang-pro"
+- model: "opus"
+- prompt: |
+    You are a RECONCILE AGENT for story NNN-feature-name.
+
+    The story and the repository disagree. Your job:
+    1. Establish what the code actually does - read it, run the tests
+    2. Classify every contract: matches / story stale / code drifted / both wrong
+    3. Decide which side is right, and why
+    4. Update the story to describe reality, or specify the code change
+    5. Record decisions under "Contract Corrections"
+    6. Check dependent and same-phase stories; update them too
+
+    RULES:
+    - Do NOT edit code - specify the change, implementation verifies it
+    - Do NOT assume the story is right because it is written down
+    - Do NOT assume the code is right because it compiles
+
+    Work directory: SERVICE_PATH/
 ```
 
 ## Directory Structure
@@ -314,71 +301,72 @@ service/
 | Status | Meaning | Set By |
 |--------|---------|--------|
 | `draft` | Story created, needs planning | User |
-| `planning` | Planning Agent writing code | Planning Agent |
-| `ready` | Code in story, awaiting implementation | Planning/Fix Agent |
-| `in_progress` | Implementation failed, needs fix | Implementation Agent |
-| `review` | Implementation passed, awaiting review | Implementation Agent |
-| `done` | Complete | Code Review Agent |
+| `ready` | Contracts and criteria written, reviewed | Planning / Reconcile Agent |
+| `in_progress` | Implementation running, or blocked | Implementation Agent |
+| `review` | Verification green, awaiting review | Implementation Agent |
+| `done` | Review approved | Review Agent |
 
 ## Quick Reference
 
 | When this happens... | Do this... |
 |----------------------|------------|
 | User creates story (draft) | Launch Planning Agent |
-| Planning complete (ready) | User reviews, then Launch Implementation Agent |
-| Implementation passes (review) | Launch Code Review Agent |
-| Implementation fails (in_progress) | Launch Fix Agent |
-| Fix complete (ready) | Launch Implementation Agent again |
-| Code review passes (done) | Story complete |
-| Code review fails | Launch Fix Agent |
+| Planning complete (ready) | User reviews contracts, then launch Implementation |
+| Build/lint/test fails | Implementation fixes it - that is the loop, not an escalation |
+| Contract proves wrong | Implementation fixes the story first, records it, continues |
+| Divergence spans several stories | Launch Reconcile Agent |
+| Implementation green (review) | Launch Review Agent with fresh context |
+| Review fails | Back to Implementation with the specific issues |
+| Review passes (done) | Story complete |
 
 ## Anti-Patterns to Avoid
 
-### DON'T: Fix Errors in Main Context
+### DON'T: Write the implementation into the story
 
 ```
-❌ "I see the error. Let me fix this import..."
-   [Main context starts editing files]
-
-✓ "Implementation failed. Launching Fix Agent..."
-   [Task tool call to Fix Agent]
+❌ Story contains every file fully written; implementation copies it.
+✓ Story contains interfaces and invariants; implementation writes and
+   verifies the bodies.
 ```
 
-### DON'T: Run Tests in Main Context
+### DON'T: Treat a failing build as an escalation
 
 ```
-❌ "Let me run the tests to see what's failing..."
-   [Main context runs go test]
-
-✓ "Implementation Agent will run tests and report results."
-   [Task tool call to Implementation Agent]
+❌ "Build failed - handing back to planning."
+✓ Build errors are the implementer's normal working material. Read the error,
+   fix the code. Only a wrong CONTRACT goes back.
 ```
 
-### DON'T: Skip the Story File
+### DON'T: Let the story rot
 
 ```
-❌ "The fix is simple, I'll just edit the file directly..."
-   [Main context edits actual code files]
+❌ "The code changed but the story still describes the old interface -
+   it's only documentation."
+✓ A stale story misleads every later reader and every later agent. Reconcile it.
+```
 
-✓ "Fix Agent will update the story, then Implementation Agent will copy."
-   [Task tool calls preserve the workflow]
+### DON'T: Plan what you cannot verify
+
+```
+❌ "Improve performance of the sync loop."
+✓ "p99 of SyncZone under 2s for a 200-record zone; benchmark added."
 ```
 
 ## Related Documentation
 
 - [Story Template](story-template.md) - Story file format
 - [Planning Guide](planning-guide.md) - Planning Agent instructions
-- [Implementation Guide](implementation-guide.md) - Implementation Agent instructions
-- [Fix Guide](fix-guide.md) - Fix Agent instructions
+- [Implementation Guide](implementation-guide.md) - Implementation loop
+- [Reconcile Guide](reconcile-guide.md) - Resolving story/code divergence
 
 ## Summary
 
-| Role | Context | Model | Does |
-|------|---------|-------|------|
-| Orchestrator | Main | Opus | Launches agents, reviews results |
-| Planner | Task | Opus | Writes code in story |
-| Implementer | Task | Haiku | Copies code to files |
-| Fixer | Task | Sonnet/Opus | Fixes errors in story |
-| Reviewer | Task | Haiku | Verifies implementation |
+| Role | Tier | Does |
+|------|------|------|
+| Planner | Opus | Scope, contracts, acceptance criteria |
+| Implementer | Sonnet | Code in the repo, verified against tooling |
+| Mechanical edits | Haiku | Single-file edits, codemods |
+| Reviewer | fresh context | Diff vs acceptance criteria |
+| Reconciler | Opus | Story/code divergence |
 
-**All work happens in agents. Main context only orchestrates.**
+**Planning decides. Implementation builds and verifies. The story stays true.**

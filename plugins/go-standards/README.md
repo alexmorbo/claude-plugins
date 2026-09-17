@@ -21,8 +21,8 @@ Claude loads these automatically when the conversation matches their description
 
 | Skill | Activates when |
 |-------|----------------|
-| `go-clean-architecture` | Implementing features, creating components, modifying Go code in domain/application/infrastructure/interface layers |
-| `go-code-planning` | Creating story files, planning features, writing technical specifications |
+| `go-clean-architecture` | Implementing features, creating components, reviewing service structure — includes when the four-layer split applies and when a flat `internal/<domain>` layout is the better fit |
+| `go-code-planning` | Creating story files, planning features, writing technical specifications — contract-first: scope, signatures, acceptance criteria, not function bodies |
 | `go-error-handling` | Creating error types, handling errors, wrapping errors, error boundaries |
 | `go-testing` | Writing tests, reviewing coverage, creating mocks |
 | `go-linting` | After Go code changes, before completing implementation |
@@ -74,7 +74,7 @@ Full docs in `references/`:
 | `ci-cd.md` | GitLab CI patterns |
 | `observability.md` | VictoriaMetrics/Logs |
 | `logging-format.md` | Structured slog |
-| `agent-workflow/` | Multi-agent (Opus → Haiku) story-driven workflow |
+| `agent-workflow/` | Contract-first, story-driven workflow: Opus plans contracts, Sonnet implements against build/lint/test feedback |
 | `anti-patterns.md` | Go anti-patterns and Claude's common mistakes (outdated idioms, generic package names, naked `return err`, pointer overuse, etc.) |
 | `style-references.md` | Pointers to Effective Go, Google, Uber, Code Review Comments + table of what each adds beyond our docs |
 | `mcp-servers.md` | Recommended MCP servers for Go work (`gopls mcp`, `hloiseau/mcp-gopls`) with `.mcp.json` snippets |

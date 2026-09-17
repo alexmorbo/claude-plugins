@@ -34,8 +34,9 @@ If the task matches anything below — **use the recommended library**. Don't wr
 
 | Need | Library | Notes |
 |------|---------|-------|
-| HTTP framework | `github.com/gin-gonic/gin` | Project default; chosen for middleware ecosystem and binding |
-| Lightweight router (alternative) | `github.com/go-chi/chi/v5` | Stdlib-style; choose if not using Gin |
+| Router (microservice default) | `github.com/go-chi/chi/v5` | Zero dependencies, 100% `net/http` compatible; composes with `httptest` and `testing/synctest` |
+| Router (stdlib) | `net/http.ServeMux` | Since 1.22 it handles methods and path values; enough for a small API |
+| HTTP framework | `github.com/gin-gonic/gin` | Take it for its middleware ecosystem and binding, or for consistency with an existing Gin service - not by default |
 | Middleware: CORS | `github.com/gin-contrib/cors` | |
 | Middleware: rate limit | `github.com/ulule/limiter/v3` | Backed by Redis or in-memory |
 | Health/readiness probes | `github.com/heptiolabs/healthcheck` | Composable checks |
@@ -104,7 +105,7 @@ If the task matches anything below — **use the recommended library**. Don't wr
 
 | Need | Library | Notes |
 |------|---------|-------|
-| Generic retry with backoff | `github.com/cenkalti/backoff/v4` | Constant, exponential, custom strategies |
+| Generic retry with backoff | `github.com/cenkalti/backoff/v5` | Constant, exponential, custom strategies. **Use v5, not v4** - v4 is frozen (last feature release Jan 2024). v5 is a breaking change: `Retry` is generic and returns `(T, error)`, `MaxElapsedTime`/`Stop`/`Clock` are gone from the struct literal and set via options or context. Examples found online are usually v4 and will not compile |
 | Circuit breaker | `github.com/sony/gobreaker` | Maintained, simple API |
 | Rate limiter (token bucket) | `golang.org/x/time/rate` | Stdlib-adjacent, no extra deps |
 
@@ -112,10 +113,10 @@ If the task matches anything below — **use the recommended library**. Don't wr
 
 | Need | Library | Notes |
 |------|---------|-------|
-| ORM | `gorm.io/gorm` | Project default |
-| Lower-level SQL | `github.com/jmoiron/sqlx` | Alternative when GORM is overkill |
+| Postgres, direct | `github.com/jackc/pgx/v5` + pgxpool | Equal-standing default for a microservice: explicit SQL, no ORM semantics to reason about. Preferred where queries are the interesting part (diffs, batch upserts, anything where a wrong write is expensive) |
+| ORM | `gorm.io/gorm` | For broad CRUD over many tables where hand-written SQL is just volume. Pick **one** of pgx-direct or GORM per service and stay with it |
+| Lower-level SQL | `github.com/jmoiron/sqlx` | Middle ground when GORM is overkill but `database/sql` is too bare |
 | Migrations | `github.com/golang-migrate/migrate/v4` | Standard; supports many drivers |
-| Postgres driver | `github.com/jackc/pgx/v5` | Native; faster than lib/pq |
 | Connection pooling (pgx) | Built-in via pgxpool | Don't add another pool |
 
 ### Database (Redis)
@@ -138,8 +139,8 @@ If the task matches anything below — **use the recommended library**. Don't wr
 
 | Need | Library | Notes |
 |------|---------|-------|
-| In-process cron | `github.com/robfig/cron/v3` | Maintained |
-| Job scheduler with persistence | `github.com/go-co-op/gocron/v2` | Alternative; richer API |
+| In-process cron / scheduling | `github.com/go-co-op/gocron/v2` | Actively maintained; richer API |
+| ~~`github.com/robfig/cron/v3`~~ | **Do not use in new code** | Last release January 2020, long-open PR queue. Migrating legacy code without an API change: `github.com/netresearch/go-cron` is a drop-in fork (import path only) |
 | Time parsing/formatting | `time` (stdlib) | Don't pull `now`-style helpers |
 
 ### Graceful shutdown
@@ -171,7 +172,7 @@ If the task matches anything below — **use the recommended library**. Don't wr
 | Assertions | `github.com/stretchr/testify/assert` (continue) or `require` (stop on fail) | Project default |
 | Mocks | `github.com/stretchr/testify/mock` | Pair with `vektra/mockery` v3 to generate |
 | Mock generation | `github.com/vektra/mockery/v3` | Or `matryer/moq` for simpler interfaces |
-| Integration containers | `github.com/testcontainers/testcontainers-go` | Postgres, Redis, etc. for real-DB tests |
+| Integration containers | `github.com/testcontainers/testcontainers-go` | Postgres, Redis, etc. for real-DB tests. **Pin the exact version** - still v0.x and minors break APIs. Put these tests behind a `//go:build integration` tag so the main feedback loop stays fast |
 | HTTP fakes | `net/http/httptest` (stdlib) | |
 | Snapshot tests | `github.com/bradleyjkemp/cupaloy/v2` | When asserting large outputs |
 | Table-driven helpers | Just use standard `t.Run(name, func)` | No library needed |
@@ -185,6 +186,30 @@ If the task matches anything below — **use the recommended library**. Don't wr
 | TOML | `github.com/BurntSushi/toml` | |
 | Templates | `text/template` / `html/template` (stdlib) | |
 | Protobuf | `google.golang.org/protobuf` | |
+
+### Agent tooling
+
+Not libraries, but the same rule applies - don't hand-roll what the toolchain
+already does.
+
+| Need | Tool | Notes |
+|------|------|-------|
+| Semantic code navigation | `gopls mcp` | gopls v0.20+ ships an MCP server. Gives definition / references / implementations / symbol search with compiler accuracy - use it instead of grepping for symbols. `gopls mcp` over stdio, or `gopls mcp -listen=host:port`; `gopls mcp -instructions` prints usage for the model |
+| Idiom migration | `go fix ./...` | Since Go 1.26 this runs modernizers - mechanical upgrades to current idioms and APIs |
+| Vulnerability scan | `golang.org/x/vuln/cmd/govulncheck` | Reachability-aware; run it in CI |
+| Tool dependencies | `go get -tool` + `go tool <name>` | Go 1.24+. The `tools.go` hack is obsolete |
+
+Canonical verification order in a Go repo:
+
+```bash
+go mod tidy
+go fmt ./...
+go fix ./...
+go vet ./...
+golangci-lint run ./...
+go test -race ./...
+govulncheck ./...
+```
 
 ---
 

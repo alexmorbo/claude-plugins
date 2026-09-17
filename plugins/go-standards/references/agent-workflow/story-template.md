@@ -4,302 +4,137 @@
 
 Stories use Markdown with YAML frontmatter for metadata.
 
-## Key Principle: Code-First Planning
+## Key Principle: Contract-First Planning
 
-**Opus writes COMPLETE, PRODUCTION-READY code in the story file.**
-**Haiku only copies this code to actual files.**
+**A story fixes intent and contracts. Implementation writes the code in the repo.**
 
-This ensures:
-- Opus (smarter model) makes all architectural decisions
-- Haiku (faster model) only performs mechanical copy-paste
-- No implementation decisions left to the faster model
+- Planning decides architecture, boundaries, signatures and acceptance criteria
+- Implementation writes bodies and tests against compiler, linter and test feedback
+- The story is the review surface; the repository is the source of truth for code
+
+Function bodies, full test suites and migrations do **not** belong in a story.
+Code that never compiled has been checked by nothing, and duplicating it in
+Markdown guarantees drift the moment implementation adjusts anything.
 
 ## Template
 
 ```markdown
 ---
+id: 42
 title: "Feature: Short descriptive title"
 status: draft
-priority: medium
-complexity: 5
-planning_model: opus
-implementation_model: haiku
-created: 2025-01-16
-updated: 2025-01-16
-risk_areas: []
+phase: a-3-catalog-sync
+depends_on: []
+files_touched:
+  - internal/catalog/repository.go
+  - internal/catalog/repository_test.go
+acceptance:
+  - "CatalogRepository.Upsert is idempotent for identical rows."
+  - "go test -race ./internal/catalog/... passes."
+verify: "make lint test"
+operator_attention: false
+created: 2026-09-17
+updated: 2026-09-17
 ---
 
 ## Context
 
-Describe the background and motivation for this task. Include:
-- Why this feature/fix is needed
+Background and motivation:
+- Why this is needed
 - Current state and pain points
-- Any relevant business context
+- Relevant business context
 
-## User Story
+## Scope
 
-**As a** [role],
-**I want to** [capability],
-**So that** [benefit].
+**IN:**
+- What this story delivers, concretely.
 
-## Acceptance Criteria
+**OUT:**
+- What is deliberately deferred, and to which story if known.
+- Adjacent work that a reviewer might otherwise expect.
 
-- [ ] Criterion 1: Specific, measurable outcome
-- [ ] Criterion 2: Another specific outcome
-- [ ] Criterion 3: Test requirements
-- [ ] Tests pass and coverage maintained
+## Contracts
 
-## Constraints
+Everything a second engineer needs in order to implement this without guessing.
 
-List any technical or business constraints:
-- Must be backwards compatible
-- Must not affect existing API
-- Performance requirements
-
----
-
-## Technical Specification
-
-> **CRITICAL**: This section contains COMPLETE, READY-TO-USE code.
-> The Implementation Agent (Haiku) will COPY this code exactly to files.
-> All architectural decisions, error handling, and tests are defined here.
-
-### Analysis
-
-[Summary of codebase exploration findings by Planning Agent]
-
-### Implementation Order
-
-1. Domain Layer (entities, value objects, repository interfaces)
-2. Application Layer (use cases, DTOs, ports)
-3. Infrastructure Layer (repository implementations, external adapters)
-4. Interface Layer (HTTP handlers, middleware)
-
----
-
-### 1. Domain Layer
-
-#### File: `domain/valueobject/example.go`
+### Types and signatures
 
 ```go
-package valueobject
-
-// Complete, production-ready code here
-// All imports included
-// All error handling included
+type CatalogRepository interface {
+    Upsert(ctx context.Context, item Item) error
+    ListByOwner(ctx context.Context, owner OwnerID) ([]Item, error)
+}
 ```
 
-#### File: `domain/valueobject/example_test.go`
+### Data schema
 
-```go
-package valueobject_test
+Table `catalog_items`:
 
-// Complete test file
-// Table-driven tests
-// All edge cases covered
-```
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | primary key |
+| `owner_id` | uuid | fk → owners(id), indexed |
+| `name` | text | unique per owner |
+| `updated_at` | timestamptz | set on every write |
 
-#### File: `domain/entity/example.go`
+### Errors
 
-```go
-package entity
+- `ErrItemNotFound` - sentinel, returned by the repository
+- Use cases wrap with context: `fmt.Errorf("list catalog for %s: %w", owner, err)`
+- HTTP maps `ErrItemNotFound` → 404, validation failures → 400
 
-// Entity code with all business rules
-```
-
-#### File: `domain/repository/example_repository.go`
-
-```go
-package repository
-
-// Repository INTERFACE only (not implementation)
-```
-
----
-
-### 2. Application Layer
-
-#### File: `application/usecase/example_usecase.go`
-
-```go
-package usecase
-
-// Use case with all orchestration logic
-```
-
-#### File: `application/usecase/example_usecase_test.go`
-
-```go
-package usecase_test
-
-// Use case tests with mocks
-```
-
-#### File: `application/dto/example_dto.go`
-
-```go
-package dto
-
-// Input/Output DTOs
-```
-
----
-
-### 3. Infrastructure Layer
-
-#### File: `infrastructure/persistence/example_repository_postgres.go`
-
-```go
-package persistence
-
-// Repository implementation with GORM
-```
-
-#### File: `infrastructure/persistence/example_repository_postgres_test.go`
-
-```go
-package persistence_test
-
-// Repository tests (unit with mocked DB)
-```
-
----
-
-### 4. Interface Layer
-
-#### File: `interface/http/handler/example_handler.go`
-
-```go
-package handler
-
-// HTTP handler - only HTTP concerns
-// Request binding, response formatting
-// Delegates to use case
-```
-
-#### File: `interface/http/handler/example_handler_test.go`
-
-```go
-package handler_test
-
-// Handler tests with httptest
-```
-
----
-
-### Dependencies
-
-[External libraries or internal modules required - if any new ones]
-
-### Risks
-
-[Potential issues identified during planning]
-
----
-
-## Agent Execution
-
-> **MANDATORY**: All operations MUST be executed via Task tool agents.
-> Main context ONLY orchestrates - launches agents and reviews results.
-
-### Implementation Agent Instructions
+### Wire format
 
 ```
-Task tool call:
-- subagent_type: "systems-programming:golang-pro"
-- model: "haiku"
-- prompt: |
-    You are an IMPLEMENTATION AGENT for story NNN-feature-name.
-
-    YOUR ONLY JOB: Copy code from the story file to actual files.
-
-    RULES:
-    - DO NOT modify the code
-    - DO NOT add anything
-    - DO NOT "improve" anything
-    - DO NOT fix errors
-    - ONLY copy code blocks to their specified file paths
-
-    PROCESS:
-    1. Read story file: SERVICE_PATH/documentation/stories/NNN-feature-name.md
-    2. Find each "#### File: `path`" section
-    3. Use Write tool to create file at that path with the code block content
-    4. Repeat for ALL files in the story
-    5. Run verification:
-       - golangci-lint run ./...
-       - go test ./...
-    6. If verification PASSES: set status to "review"
-    7. If verification FAILS:
-       - Write errors to "Issues Found" section
-       - Keep status as "in_progress"
-       - STOP (do NOT fix them)
-
-    Work directory: SERVICE_PATH/
+POST /v1/items  { "name": string, "owner_id": uuid }
+201 → { "id": uuid }
+409 → { "error": "item exists" }
 ```
 
-### Fix Agent Instructions
+### Invariants
 
-> **When to use**: When Implementation Agent fails with errors.
+State rules in prose - they survive refactoring, copied bodies do not.
 
-```
-Task tool call:
-- subagent_type: "systems-programming:golang-pro"
-- model: "sonnet"
-- prompt: |
-    You are a FIX AGENT for story NNN-feature-name.
+- An item is identified by `(owner_id, name)`; the provider exposes no stable id.
+- Writes are idempotent: re-sending an identical row is a no-op, not an error.
 
-    Implementation failed with errors. Your job:
-    1. Read story: SERVICE_PATH/documentation/stories/NNN-feature-name.md
-    2. Find "Issues Found" section with error details
-    3. Fix ALL errors in the code blocks IN THE STORY FILE
-    4. Document fixes in "Fixes Applied" section
-    5. Clear "Issues Found" section
-    6. Set status to "ready"
+## Steps
 
-    RULES:
-    - ONLY edit the story file, NOT actual code files
-    - Fix ALL errors, not just some
-    - Do NOT add new features
-    - Do NOT run tests
-    - Do NOT create actual files
+Ordered, each ending in a check:
 
-    Work directory: SERVICE_PATH/
+1. Repository interface + in-memory fake → `go build ./...`
+2. Postgres implementation + integration test → `make test-integration`
+3. Wire into the use case → `make lint test`
+
+## Verification
+
+```bash
+make fmt lint test
+go test -race -count=1 ./internal/catalog/...
 ```
 
-### Code Review Agent Instructions
+## Open Questions
 
-```
-Task tool call:
-- subagent_type: "code-documentation:code-reviewer"
-- model: "haiku"
-- prompt: |
-    Review implementation for story NNN-feature-name.
+- [NEEDS CLARIFICATION: specific question that must be answered before `ready`]
 
-    CHECKLIST:
-    1. All files from story were created correctly
-    2. Code matches story exactly (no modifications)
-    3. Tests pass
-    4. Lint passes
-    5. Coverage meets thresholds (domain 95%, application 80%, overall 80%)
+Unanswered questions block `ready`. Never resolve them by plausible invention.
 
-    OUTPUT:
-    - APPROVED: Set status to "done"
-    - NEEDS_CHANGES: Report issues (Fix Agent must fix the story)
-```
+## Notes
+
+Commit: `feat(catalog): add repository with idempotent upsert`
+
+Anything else the implementer or reviewer needs to know.
 
 ---
 
 ## Implementation Notes
 
-> Updated by Implementation Agent during execution
+> Filled in during implementation
 
 ### Progress
 
-- [ ] Domain layer files created
-- [ ] Application layer files created
-- [ ] Infrastructure layer files created
-- [ ] Interface layer files created
-- [ ] Verification passed
+- [ ] Step 1
+- [ ] Step 2
 
 ### Verification Results
 
@@ -309,25 +144,16 @@ go test: [PASS/FAIL]
 coverage: [X%]
 ```
 
-### Issues Found
+### Contract Corrections
 
-[If verification fails, Implementation Agent lists exact errors here]
-
-### Fixes Applied
-
-[Fix Agent documents all fixes here after correcting errors in code blocks]
-
----
+> If implementation proved a contract wrong, the story was fixed FIRST.
+> Record what changed and why.
 
 ## Files Changed
 
-[List of all files created/modified - filled after implementation]
-
----
+[Filled in after implementation]
 
 ## Review Notes
-
-> Code review feedback
 
 [Reviewer comments]
 ```
@@ -338,36 +164,30 @@ coverage: [X%]
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `id` | number | Sequential story number; other stories reference it |
 | `title` | string | Short descriptive title with type prefix |
-| `status` | enum | `draft`, `planning`, `ready`, `in_progress`, `review`, `done` |
-| `priority` | enum | `high`, `medium`, `low` |
-| `complexity` | number | 1-10 scale (affects review requirements) |
-| `planning_model` | string | Model for planning: `opus` (recommended) |
-| `implementation_model` | string | Model for implementation: `haiku` |
-| `created` | date | Story creation date (YYYY-MM-DD) |
-| `updated` | date | Last update date (YYYY-MM-DD) |
-| `depends_on` | string | (optional) Story ID that must be completed first |
-| `risk_areas` | array | (optional) Areas of risk: `database`, `api-breaking`, `security` |
-
-### Complexity Scale
-
-| Level | Description | Review Requirements |
-|-------|-------------|---------------------|
-| 1-3 | Simple, isolated change | Self-review OK |
-| 4-6 | Moderate, touches multiple files | Code review required |
-| 7-8 | Complex, architectural impact | Senior review required |
-| 9-10 | Critical, system-wide changes | Architecture review required |
+| `status` | enum | `draft`, `ready`, `in_progress`, `review`, `done` |
+| `phase` | string | Groups stories belonging to one larger change |
+| `depends_on` | array | Story ids that must be `done` first |
+| `files_touched` | array | Expected blast radius, known before work starts |
+| `acceptance` | array | Checkable statements that define done |
+| `verify` | string | Exact command proving the story is complete |
+| `operator_attention` | bool | `true` when a human must decide or act |
+| `created` / `updated` | date | YYYY-MM-DD |
 
 ### Status Field Values
 
 | Status | Meaning | Who Sets |
 |--------|---------|----------|
 | `draft` | Story created, needs planning | User |
-| `planning` | Opus writing code in story | Planning Agent (Opus) |
-| `ready` | Code written, ready for copy to files | Planning Agent (Opus) |
-| `in_progress` | Haiku copying code to files | Implementation Agent (Haiku) |
-| `review` | Files created, awaiting review | Implementation Agent (Haiku) |
-| `done` | Review approved | Code Review Agent |
+| `ready` | Contracts and criteria written, reviewed, implementable | Planning Agent |
+| `in_progress` | Implementation running | Implementation Agent |
+| `review` | Verification green, awaiting review | Implementation Agent |
+| `done` | Review approved | Review Agent |
+
+Note: there is no separate "fix" status. Implementation fixes its own errors
+against compiler and test output; only a **wrong contract** sends the story
+back, and that is recorded in Contract Corrections.
 
 ### Title Prefixes
 
@@ -381,100 +201,70 @@ coverage: [X%]
 | `Test:` | Test additions/fixes |
 | `Chore:` | Maintenance tasks |
 
-## Code Block Requirements
+## Writing Acceptance Criteria
 
-Each code block in Technical Specification MUST:
+Criteria must be checkable by reading output, not by opinion.
 
-1. **Have exact file path**: `#### File: \`exact/path/to/file.go\``
-2. **Be complete**: All imports, all functions, all error handling
-3. **Be production-ready**: No TODOs, no placeholders, no "implement later"
-4. **Include tests**: Every `.go` file has corresponding `_test.go`
-5. **Follow standards**: Clean Architecture, project code style
+### Bad
 
-### Bad Example (DO NOT DO THIS)
+```yaml
+acceptance:
+  - "Repository is well designed"
+  - "Tests are added"
+```
+
+### Good
+
+```yaml
+acceptance:
+  - "Upsert with an identical row twice leaves exactly one row and returns nil."
+  - "ListByOwner returns items ordered by name, ascending."
+  - "go test -race ./internal/catalog/... passes."
+```
+
+## Contracts: What Belongs, What Does Not
+
+### Belongs
 
 ```markdown
-#### File: `domain/entity/user.go`
-
 ```go
-// TODO: implement user entity
-type User struct {
-    // add fields
-}
+type Email struct{ value string }
 
-func NewUser() *User {
-    // implement
-}
-```
+func NewEmail(value string) (Email, error)
+func (e Email) Value() string
+func (e Email) IsZero() bool
 ```
 
-### Good Example
+`NewEmail` rejects empty input and anything without a single `@` with a
+non-empty local part and domain, returning `ErrInvalidEmail`.
+```
+
+### Does Not Belong
 
 ```markdown
-#### File: `domain/entity/user.go`
-
 ```go
-package entity
-
-import (
-    "errors"
-    "time"
-
-    "service/domain/valueobject"
-)
-
-var (
-    ErrEmptyUserName = errors.New("user name cannot be empty")
-)
-
-type User struct {
-    id        valueobject.UserID
-    email     valueobject.Email
-    name      string
-    createdAt time.Time
-    updatedAt time.Time
-}
-
-func NewUser(email valueobject.Email, name string) (*User, error) {
-    if name == "" {
-        return nil, ErrEmptyUserName
+func NewEmail(value string) (Email, error) {
+    if value == "" {
+        return Email{}, ErrInvalidEmail
     }
-
-    return &User{
-        id:        valueobject.NewUserID(),
-        email:     email,
-        name:      name,
-        createdAt: time.Now(),
-        updatedAt: time.Now(),
-    }, nil
-}
-
-func (u *User) ID() valueobject.UserID {
-    return u.id
-}
-
-func (u *User) Email() valueobject.Email {
-    return u.email
-}
-
-func (u *User) Name() string {
-    return u.name
-}
-
-func (u *User) UpdateName(name string) error {
-    if name == "" {
-        return ErrEmptyUserName
+    if !emailRegex.MatchString(value) {
+        return Email{}, ErrInvalidEmail
     }
-    u.name = name
-    u.updatedAt = time.Now()
-    return nil
+    return Email{value: value}, nil
 }
 ```
 ```
+
+The signature and the rule are the contract. The body is implementation, and
+it belongs in the repository where `go test` can check it.
+
+## Sizing
+
+Keep a story to roughly a day of work and a reviewable diff. If
+`files_touched` sprawls across unrelated packages, or the steps cannot each end
+in a check, split it and use `depends_on` to order the pieces.
 
 ## Naming Convention
-
-Story files should be named with a sequential number prefix:
 
 ```
 NNN-short-kebab-case-description.md
@@ -490,40 +280,39 @@ Examples:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    USER                                     │
-│  Creates story file with Context, User Story, Constraints   │
+│  Creates story: Context, Scope, Constraints                 │
 │  Status: draft                                              │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    OPUS (Planning)                      │
+│                    PLANNING (Opus)                          │
 │  - Explores codebase                                        │
-│  - Writes COMPLETE CODE in story file                       │
-│  - All decisions made here                                  │
-│  Status: planning → ready                                   │
+│  - Writes Scope, Contracts, Steps, Verification             │
+│  - Marks open questions; they block `ready`                 │
+│  Status: draft → ready                                      │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    USER REVIEW                              │
-│  Reviews the code in story file                             │
-│  Approves or requests changes                               │
+│  Reviews contracts and criteria - the high-leverage surface │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    HAIKU (Implementation)                   │
-│  - Reads story file                                         │
-│  - COPIES code to files (no modifications)                  │
-│  - Runs verification                                        │
-│  Status: in_progress → review                               │
+│                 IMPLEMENTATION (Sonnet)                     │
+│  - Writes code in the repo                                  │
+│  - Compiles, lints, tests, fixes its own errors             │
+│  - Contract wrong? Fix story first, then code               │
+│  Status: ready → in_progress → review                       │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    HAIKU (Code Review)                      │
-│  - Verifies files match story                               │
-│  - Checks tests/coverage                                    │
+│                 REVIEW (fresh context)                      │
+│  - Reviews the diff against acceptance criteria             │
+│  - Never the agent that wrote the code                      │
 │  Status: review → done                                      │
 └─────────────────────────────────────────────────────────────┘
 ```

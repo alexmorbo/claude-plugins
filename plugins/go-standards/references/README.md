@@ -41,8 +41,9 @@ For AI-assisted development workflow, see [agent-workflow/](agent-workflow/):
 |----------|---------|
 | [Overview](agent-workflow/README.md) | Multi-agent workflow explanation |
 | [Story Template](agent-workflow/story-template.md) | Task documentation format (Markdown + YAML) |
-| [Planning Guide](agent-workflow/planning-guide.md) | For planning agents (Opus / Sonnet) |
-| [Implementation Guide](agent-workflow/implementation-guide.md) | For implementation agents (Haiku) |
+| [Planning Guide](agent-workflow/planning-guide.md) | Writing scope, contracts and acceptance criteria (Opus) |
+| [Implementation Guide](agent-workflow/implementation-guide.md) | Writing code in the repo against build/lint/test feedback (Sonnet) |
+| [Reconcile Guide](agent-workflow/reconcile-guide.md) | Resolving divergence between a story and the code (Opus) |
 
 ## Claude Code Skills & Hooks
 
